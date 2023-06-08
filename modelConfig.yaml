@@ -1,0 +1,18 @@
+
+
+Device: cpu  # or cuda
+
+backbone:
+  encoder:
+    - [-1, [32, 32]]
+    - [-1, [64, 64]]
+  decoder:
+    - []
+    - []
+
+
+
+
+
+
+
