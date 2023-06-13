@@ -167,11 +167,69 @@ class SegSEBlock(nn.Module):
 
         if net_mode == '2d':
             conv = nn.Conv2d
+        elif net_mode == '3d':
+            conv = nn.Conv3d
+        else:
+            conv = None
+
+        self.in_channels = in_channels
+        self.rate = rate
+        self.dila_conv = conv(self.in_channels, self.in_channels//self.rate, 3, padding=2, dilation=self.rate)
+        self.conv1 = conv(self.in_channels//self.rate, self.in_channels, 1)
+
+    def forward(self, input):
+        x = self.dila_conv(input)
+        x = self.conv1(x)
+        x = nn.Sigmoid(x)
+        return x
 
 
+class RecombinationBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, batch_normalization=True, kernel_size=3, net_mode='2d'):
+        super(RecombinationBlock, self).__init__()
 
+        if net_mode == '2d':
+            conv = nn.Conv2d
+            bn = nn.BatchNorm2d
+        elif net_mode == '3d':
+            conv = nn.Conv3d
+            bn = nn.BatchNorm3d
+        else:
+            conv = None
+            bn = None
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.batch_normalization = batch_normalization
+        self.kernel_size = kernel_size
+        self.rate = 2
+        self.expan_channels = self.out_channels*self.rate
 
+        self.expansion_conv = conv(self.in_channels, self.expan_channels, 1)
+        self.skip_conv = conv(self.in_channels, self.out_channels, 1)
+        self.zoom_conv = conv(self.out_channels*self.rate, self.out_channels, 1)
 
+        self.bn = bn(self.expan_channels)
+        self.norm_conv = conv(self.expan_channels, self.expan_channels, self.kernel_size, padding=1)
+
+        self.segse_block = SegSEBlock(self.expan_channels, net_mode=net_mode)
+
+    def forward(self, input):
+        x = self.expansion_conv(input)
+
+        for i in range(1):
+            if self.batch_normalization:
+                x = self.bn(x)
+            x = nn.ReLU6(x)
+            x = self.norm_conv(x)
+
+        se_x = self.segse_block(x)
+
+        x = x * se_x
+
+        x = self.zoom_conv(x)
+        skip_x = self.skip_conv(input)
+        out = x + skip_x
+        return out
 
 
 class UNet(nn.Module):

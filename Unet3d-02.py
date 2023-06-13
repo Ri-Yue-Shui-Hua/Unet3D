@@ -87,15 +87,30 @@ class UNet_3D(nn.Module):
         self.decoder_1 = Up(ch[2], ch[1]) # 64, 32
         self.output = last_layer(ch[1], out_classes) if last_layer is not None else None
 
+    # def forward(self, x):
+    #     e1 = self.encoder_1(x)
+    #     e2 = self.encoder_2(e1)
+    #     e3 = self.encoder_3(e2)
+    #     e4 = self.encoder_4(e3)
+    #     e = self.buttom(e4)
+    #     #print(e.shape, e3.shape)
+    #     d4 = self.decoder_4(e, e4)
+    #     d3 = self.decoder_3(d4, e3)
+    #     d2 = self.decoder_2(d3, e2)
+    #     d1 = self.decoder_1(d2, e1)
+    #     if self.output is not None:
+    #         d1 = self.output(d1)
+    #     return d1
+
     def forward(self, x):
         e1 = self.encoder_1(x)
         e2 = self.encoder_2(e1)
         e3 = self.encoder_3(e2)
         e4 = self.encoder_4(e3)
-        e = self.buttom(e4)
+        # e = self.buttom(e4)
         #print(e.shape, e3.shape)
-        d4 = self.decoder_4(e, e4)
-        d3 = self.decoder_3(d4, e3)
+        # d4 = self.decoder_4(e, e4)
+        d3 = self.decoder_3(e4, e3)
         d2 = self.decoder_2(d3, e2)
         d1 = self.decoder_1(d2, e1)
         if self.output is not None:

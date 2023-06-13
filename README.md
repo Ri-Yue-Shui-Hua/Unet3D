@@ -10,4 +10,6 @@ implement Unet3D for segmentation
 - [ ] 实现模型评价功能；
 - [ ] 实现各种小tricks；
 - [ ] 切换CPU与GPU，并可以设置单卡与多卡；
+- [ ] 设置权重初始化方式；
+- [ ] 
 
