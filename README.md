@@ -9,3 +9,5 @@ implement Unet3D for segmentation
 - [ ] 实现模型转换功能；
 - [ ] 实现模型评价功能；
 - [ ] 实现各种小tricks；
+- [ ] 切换CPU与GPU，并可以设置单卡与多卡；
+
