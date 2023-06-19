@@ -72,7 +72,8 @@ class Out(nn.Module):
         return self.norm(self.conv(x))
 
 
-ch = [32,32,64,128,256,512]
+ch = [32, 32, 64, 128, 256, 512]
+
 class UNet_3D(nn.Module):
     def __init__(self, in_channels, out_classes, last_layer=Out):
         super(UNet_3D, self).__init__()
