@@ -88,8 +88,8 @@ def transform(d, gt):
 
 
 def for_test_load_data(save=False):
-    img_path = '/home/algo/ding/data/data/Data_train_scaled_2/0001.nii.gz'
-    gt_path = '/home/algo/ding/data/data/Heatmap/Heatmap_2/Train/0001'
+    img_path = '/home/algo/data/data/Data_train_scaled_2/0001.nii.gz'
+    gt_path = '/home/algo/data/data/Heatmap/Heatmap_2/Train/0001'
     sitk_img = sitk.ReadImage(img_path)
     print('Reading '+img_path+'\tDone!')
     spacing = sitk_img.GetSpacing()
@@ -215,8 +215,8 @@ def write_sitk_img(img_arr, spacing, origin, direction, name):
 if __name__ == '__main__':
     # img, gt = for_test_load_data(save=True)
     from glob import glob
-    # img_path = '/home/algo/ding/data_d/data/Patient_data/test_data/knee_femur/left/BJ_02008_knee.nrrd'
-    # img_path = glob("/home/algo/ding/data_d/data/Patient_data/test_data/knee_femur/left/*.nrrd")
+    # img_path = '/home/algo/data_d/data/Patient_data/test_data/knee_femur/left/BJ_02008_knee.nrrd'
+    # img_path = glob("/home/algo/data_d/data/Patient_data/test_data/knee_femur/left/*.nrrd")
     # for f in img_path:
     #     saved_dir = os.path.dirname(f)
     #     saved_name = os.path.basename(f).split('.')[0]+'_flip.nrrd'

@@ -2,8 +2,8 @@
 implement Unet3D for segmentation
 
 -  Todo
-- [ ] 实现基于Pytorch的Unet3D;
-- [ ] 实现数据加载功能；
+- [x] 实现基于Pytorch的Unet3D;
+- [x] 实现数据加载功能；
 - [ ] 实现断点继续训练功能；
 - [ ] 实现训练可视化功能；
 - [ ] 实现模型转换功能；
@@ -13,3 +13,6 @@ implement Unet3D for segmentation
 - [ ] 设置权重初始化方式；
 - [ ] 
 
+
+
+![image-20240102135253258](README.assets/image-20240102135253258.png)
