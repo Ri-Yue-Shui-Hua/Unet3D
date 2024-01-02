@@ -4,6 +4,7 @@
 # @Author : wmz
 
 import logging
+import os.path
 import time
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
@@ -86,6 +87,84 @@ def train(net, dataset, val_rate, epochs, batch_size, lr, model_str=''):
     val_loader = DataLoader(val_set, batch_size=batch_size)
     optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     criterion, crit = torch.nn.MSELoss(), "MSE"
+    log_saved_dir = os.path.join('runs', model_str) if model_str != '' else None
+    writer = SummaryWriter(log_dir=log_saved_dir, comment=f'LR_{lr}_{crit}_EP_{epochs}')
+    logging.info(f'''Start training:
+    Device:     {device}
+    Epochs:     {epochs}
+    Batch Size: {batch_size}
+    LR:         {lr}
+    Criterion:  {crit}
+    Train size: {num_train}
+    Val size:   {num_val}
+    ''')
+    t = time.strftime("%m%d%H%M%S", time.localtime())
+    saved_model_dir = os.path.join('trained_model', model_str + '_' + t)
+    global_step = 0
+    for epoch in range(epochs):
+        net.train()
+        with tqdm(total=num_train, dec=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
+            for f, img, mark_gt in train_loader:
+                img, mark_gt = img.to(device), mark_gt.to(device)
+                mark_pred = net(img)
+                loss = criterion(mark_pred, mark_gt)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                pbar.set_postfix(**{'loss': loss.item()})
+                pbar.update(img.shape[0])
+                writer.add_scalar('Loss/train_MSE', loss.item(), global_step)
+                global_step += 1
+        net.eval()
+        with tqdm(total=num_val, desc='validation', unit='img') as pbar:
+            for _, img, mark_gt in val_loader:
+                with torch.no_grad():
+                    img, mark_gt = img.to(device), mark_gt.to(device)
+                    mark_pred = net(img)
+                    loss_mse = criterion(mark_pred, mark_gt)
+                    pbar.set_postfix(**{'loss': loss.item()})
+                    pbar.update(img.shape[0])
+                    writer.add_scalar('Loss/Val_MSE', loss_mse.item(), global_step)
+
+        if epoch % Config.saved_epoch_step == 0:
+            if not os.path.exists(saved_model_dir):
+                os.makedirs(saved_model_dir)
+            saved_model_name = model_str + '_' + t + f'LR_{lr}_BS_{batch_size}_{crit}_ep_{epoch}_{epochs}_sigma_{Config.sigma}' + str(loss.item()) + '.pth'
+            saved_model_name = os.path.join(saved_model_dir, saved_model_name)
+            torch.save(net.state_dict(), saved_model_name)
+    writer.close()
+    logging.info(f'saving model')
+
+
+def train_half_sigma_2_ep_200(des=''):
+    # Train data: half size
+    start_time = time.strftime("%m%d%H%M%S", time.localtime())
+    from nets.UNetModel import UNet
+    train_heatmap_dir = '/Data/wmz/Dataset/Train/'
+    train_data_dir = Config.train_dir_scaled_2
+    dataset = SemanticDataset(train_data_dir, train_heatmap_dir, 1.0, 1.0)
+    net = UNet(dataset.input_channels, dataset.output_channels)
+    net.to(device)
+    val_rate = Config.val_rate
+    Config.lr = 0.0001
+    epoch = 300
+    bz = 1
+    train(net, dataset, val_rate, epoch, bz, Config.lr, model_str='')
+    end_time = time.strftime("%m%d%H%M%S", time.localtime())
+    print(des, '\tStart Time', start_time, '\tEnd Time: ', end_time)
+
+
+if __name__ == "__main__":
+    train_half_sigma_2_ep_200()
+
+
+
+
+
+
+
+
+
 
 
 

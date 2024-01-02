@@ -4,10 +4,13 @@
 # @Author : wmz
 
 import torch
+import time
+from tqdm import tqdm, trange
+import logging
+
 
 if __name__ == '__main__':
-    count = torch.cuda.device_count()
-    print("cuda count: ", count)
-    cuda_available = torch.cuda.is_available()
-    print("cuda available :", cuda_available)
+    logging.warning('Watch out!')  # will print a message to the console
+    logging.info('I told you so')  # will not print anything
+
 

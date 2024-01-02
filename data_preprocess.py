@@ -147,6 +147,7 @@ def for_test_filp(img_path, saved_name_path, save=False):
     print(img.shape)
     if not save:
         return img
+
     def write_sitk_img(img, name):
         sitk_img = sitk.GetImageFromArray(img)
         sitk_img.SetSpacing(spacing)
@@ -197,7 +198,6 @@ def generate_enhanced_data_offline(input_path, output_path, suffix, enhance_type
         print("Save transformed_img")
         saved_name_path = file.replace(input_path, output_path)
         write_sitk_img(img, spacing, origin, direction, saved_name_path)
-
 
 
 def get_files(path, suffix):
