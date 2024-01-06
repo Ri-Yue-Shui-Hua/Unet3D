@@ -15,8 +15,8 @@ from utils import *
 device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
 
-def observe_for_training(net, epoch, epochs, critic, global_step, batch_size, lr, loss, saved_dir):
-    '''
+def observe_for_training(net, epoch, epochs, critic, global_step, batch_size, lr, loss, sample_file_name, saved_dir):
+    """
     Observe the training process
     :param net:
     :param epoch:
@@ -26,9 +26,10 @@ def observe_for_training(net, epoch, epochs, critic, global_step, batch_size, lr
     :param batch_size:
     :param lr:
     :param loss:
+    :param sample_file_name:
     :param saved_dir:
     :return:
-    '''
+    """
     return None
     sample_epoch_saved_dir_name = saved_dir
     if not os.path.exists(sample_epoch_saved_dir_name):
@@ -36,10 +37,10 @@ def observe_for_training(net, epoch, epochs, critic, global_step, batch_size, lr
     sample_global_step_saved_dir = os.path.join(sample_epoch_saved_dir_name, str(epoch) + '_' + str(global_step) + '_' + str(loss))
     if not os.path.exists(sample_global_step_saved_dir):
         os.makedirs(sample_global_step_saved_dir)
-    net_saved_name = 'unet' + f'_LR_{lr}_BS_{batch_size}_{critic}_ep_{epoch}_{epochs}_sigma_{Config.sigma}' + '.pth'
+    net_saved_name = 'unet' + f'_LR_{lr}_BS_{batch_size}_{critic}_ep_{epoch}_{epochs}' + '.pth'
     net_saved_path = os.path.join(sample_global_step_saved_dir, net_saved_name)
     torch.save(net.state_dict(), net_saved_path)
-    observer_dataset = SemanticDataset([Config.sample_file_name])
+    observer_dataset = SemanticDataset([sample_file_name])
     observer_loader = DataLoader(observer_dataset, batch_size=1)
     with torch.no_grad():
         for file_id, s_img in observer_loader:
@@ -79,7 +80,7 @@ def JS_loss(pred, gt):
     return loss
 
 
-def train(net, dataset, val_rate, epochs, batch_size, lr, model_str=''):
+def train(net, dataset, val_rate, epochs, batch_size, lr, saved_epoch_step, model_str=''):
     num_val = int(len(dataset) * val_rate)
     num_train = len(dataset) - num_val
     train_set, val_set = random_split(dataset, [num_train, num_val])
@@ -126,36 +127,36 @@ def train(net, dataset, val_rate, epochs, batch_size, lr, model_str=''):
                     pbar.update(img.shape[0])
                     writer.add_scalar('Loss/Val_MSE', loss_mse.item(), global_step)
 
-        if epoch % Config.saved_epoch_step == 0:
+        if epoch % saved_epoch_step == 0:
             if not os.path.exists(saved_model_dir):
                 os.makedirs(saved_model_dir)
-            saved_model_name = model_str + '_' + t + f'LR_{lr}_BS_{batch_size}_{crit}_ep_{epoch}_{epochs}_sigma_{Config.sigma}' + str(loss.item()) + '.pth'
+            saved_model_name = model_str + '_' + t + f'LR_{lr}_BS_{batch_size}_{crit}_ep_{epoch}_{epochs}' + str(loss.item()) + '.pth'
             saved_model_name = os.path.join(saved_model_dir, saved_model_name)
             torch.save(net.state_dict(), saved_model_name)
     writer.close()
     logging.info(f'saving model')
 
 
-def train_half_sigma_2_ep_200(des=''):
+def train_ep_200(des=''):
     # Train data: half size
     start_time = time.strftime("%m%d%H%M%S", time.localtime())
     from nets.UNetModel import UNet
     train_heatmap_dir = '/Data/wmz/Dataset/Train/'
-    train_data_dir = Config.train_dir_scaled_2
+    train_data_dir = ''
     dataset = SemanticDataset(train_data_dir, train_heatmap_dir, 1.0, 1.0)
     net = UNet(dataset.input_channels, dataset.output_channels)
     net.to(device)
-    val_rate = Config.val_rate
-    Config.lr = 0.0001
-    epoch = 300
+    val_rate = 0
+    lr = 0.0001
+    epoch = 200
     bz = 1
-    train(net, dataset, val_rate, epoch, bz, Config.lr, model_str='')
+    train(net, dataset, val_rate, epoch, bz, lr, model_str='')
     end_time = time.strftime("%m%d%H%M%S", time.localtime())
     print(des, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 
 
 if __name__ == "__main__":
-    train_half_sigma_2_ep_200()
+    train_ep_200()
 
 
 

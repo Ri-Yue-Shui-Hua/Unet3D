@@ -38,7 +38,7 @@ def seg_pred(net, eval_dataset, model_str, bz=1, saved_flag=False, eval_img_scal
             if saved_flag:
                 mark_pred = _mark_pre[0].cpu().numpy()
                 result_dir = eval_check_dir
-                save_result(itk_img_file, mark_pred, result_dir, eval_img_scale, 'Final')
+                # save_result(itk_img_file, mark_pred, result_dir, eval_img_scale, 'Final')
 
 
 def GetLargestConnectedCompont(binarysitk_image_array):

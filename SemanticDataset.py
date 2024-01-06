@@ -8,7 +8,7 @@ import SimpleITK as sitk
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from utils import resize_image, img_arr_threshold
+from utils import resize_image
 from data_preprocess import transform
 
 
