@@ -8,13 +8,12 @@ import SimpleITK as sitk
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from config import Config
 from utils import resize_image, img_arr_threshold
 from data_preprocess import transform
 
 
 class SemanticDataset(Dataset):
-    def __init__(self, data_source=None, label_dir=None, img_scale=1.0, label_scale=None, trans_flag=True):
+    def __init__(self, class_nums, data_source=None, label_dir=None, img_scale=1.0, label_scale=None, trans_flag=True):
         '''
         :param data_source: either a dir name or a file lists. If it is a dir name, we can search all files under this dir.
             If it is a file list, we will use it directly.
@@ -26,8 +25,7 @@ class SemanticDataset(Dataset):
         '''
         self.label_dir = label_dir
         self.input_channels = 1
-        self.output_channels = Config.class_nums
-        self.val_rate = Config.val_rate
+        self.output_channels = class_nums
         self.img_scale = img_scale
         self.label_scale = label_scale if label_scale is not None else img_scale
 
@@ -57,7 +55,7 @@ class SemanticDataset(Dataset):
                 if os.path.exists(label_path):
                     break
         else:
-            label_path = os.path.join(self.heatmap_dir, fn)
+            label_path = os.path.join(self.label_dir, fn)
         return label_path
 
     def check_direction_and_flip(self, direction, img_arr):
@@ -76,16 +74,11 @@ class SemanticDataset(Dataset):
         itk_img, img_arr = self.get_array_from_volume(itk_img_file, self.img_scale)
         direction = np.array(itk_img.GetDirection())
         # print(itk_img_file)
-
-        if Config.training_data_threshold_flag:
-            img_arr = img_arr_threshold(img_arr, Config.train_data_threshold_low,
-                                        Config.training_data_threshold_high,
-                                        Config.training_data_norm_flag,
-                                        Config.Norm_method)
+        # 数据正则化
         img_arr = img_arr[np.newaxis, :, :, :]
         if self.label_dir is not None:
             labels = []
-            for label_id in range(Config.class_nums):
+            for label_id in range(self.output_channels):
                 label_path = self.get_seg_file_name(itk_img_file, label_id+1)
                 print('\t' + label_path)
                 sitk_label, label_arr = self.get_array_from_volume(label_path, self.label_scale)

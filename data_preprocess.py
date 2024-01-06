@@ -1,5 +1,4 @@
 from utils import resize_image, convert_numpy_to_sitk
-from config import Config
 import SimpleITK as sitk
 import os
 import numpy as np

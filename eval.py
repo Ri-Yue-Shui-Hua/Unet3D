@@ -16,7 +16,6 @@ import pandas as pd
 
 from utils import *
 
-from config import Config
 CUDA = 1
 if(CUDA):
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
@@ -79,17 +78,17 @@ def get_single_heatmap_dice(m, gt):
     return dice
 
 
-def calculate_single_sample_dice(p, gt, p_thresh=[0.3, 0.5, 0.7]):
+def calculate_single_sample_dice(p, gt, class_num, p_thresh=[0.3, 0.5, 0.7]):
     assert p.shape == gt.shape
     p_shp = p.shape
     print('p_shp = ', p_shp)
-    assert p_shp[0] >= Config.object_class_num
+    assert p_shp[0] >= class_num
     # dice_list format: [ [femur_right_dice, femur_left, hip_right, hip_left] * 3]
     dice_list = []
     for t in p_thresh:
         m = (p > t) * 1
         heatmap_dice_list = []
-        for c in range(Config.object_class_num):
+        for c in range(class_num):
             heatmap_dice = get_single_heatmap_dice(m[c], gt[c])
             # heatmap_dice = get_single_heatmap_dice_rm_small_ccs(m[c], gt[c])
             heatmap_dice_list.append(heatmap_dice)
@@ -172,12 +171,12 @@ def check_direction_and_adjust_heatmap(direction, heatmaps):
     return heatmaps
 
 
-def seg_result_postprocess(p, itk_img_file):
+def seg_result_postprocess(p, itk_img_file, class_num):
     # p.shape = [C,X,Y,Z]
     itk_img = sitk.ReadImage(itk_img_file)
     direction = np.array(itk_img.GetDirection())
     if 'left' in itk_img_file:
-        p = check_direction_and_flip(direction, p[0:Config.object_class_num])
+        p = check_direction_and_flip(direction, p[0:class_num])
 
     return p.copy()
 

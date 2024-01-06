@@ -5,6 +5,7 @@
 
 from train import *
 from eval import *
+import argparse
 from glob import glob
 import numpy as np
 import csv
@@ -16,7 +17,7 @@ device = torch.device('cpu')
 model_str = 'Deconv_ReLu_MSE'
 
 
-def train_and_eval():
+def train_and_eval(args):
     dataFolderName = "AnkleSegmentation"
     train_data_dir = r'D:\Dataset\TibiaSegmentation\train'
     train_heatmap_dir = r'D:\Dataset\TibiaSegmentation\label'
@@ -26,26 +27,25 @@ def train_and_eval():
     eval_heatmap_dir = '/Data/wmz/Dataset/' + dataFolderName + '/label'
     saved_dir = '/Data/wmz/Dataset/' + dataFolderName + '/test_result'
 
-
-    train_for_Seg(train_data_dir, train_heatmap_dir, model_str)
+    train_for_Seg(train_data_dir, train_heatmap_dir, model_str, args)
     # model_path_list = sorted(glob(os.path.join('trained_model', model_str + '*/*.pth')))
     # print(model_path_list)
     # eval_all_models_for_seg(eval_data, eval_heatmap_dir, model_str, model_path_list, saved_dir, postfix='')
     # eval_all_models_for_seg(patient_eval_data, patient_eval_mask_dir, model_str, model_path_list, saved_dir, postfix='_patient')
 
 
-def train_for_Seg(train_data_dir, train_heatmap_dir, model_str):
+def train_for_Seg(train_data_dir, train_heatmap_dir, model_str, args):
     start_time = time.strftime("%m%d%H%M%S", time.localtime())
-    dataset = SemanticDataset(train_data_dir, train_heatmap_dir, 1.0, 1.0)
+    dataset = SemanticDataset(train_data_dir, train_heatmap_dir, img_scale=1.0, label_scale=1.0)
     # Here , class_nums --> objet_nums in segmentation....
-    net = UNet(1, Config.class_nums)
+    net = UNet(1, args.num_class)
     net.to(device)
     print(device)
     val_rate = 0
-    Config.lr = 0.0001
-    epoch = 200
-    bz = 2
-    train(net, dataset, val_rate, epoch, bz, Config.lr, model_str)
+    lr = args.learning_rate
+    epoch = args.epochs
+    bz = args.batch_size
+    train(net, dataset, val_rate, epoch, bz, lr, model_str)
     end_time = time.strftime("%m%d%H%M%S", time.localtime())
     print(model_str, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 
@@ -62,10 +62,10 @@ def export_onnx(model, input, input_names, output_names, modelname):
     print("export onnx model success!")
 
 
-def pred_for_Seg(eval_data, eval_heatmap_dir, model_path, model_str):
+def pred_for_Seg(eval_data, eval_heatmap_dir, model_path, model_str, class_nums):
     start_time = time.strftime("%m%d%H%M%S", time.localtime())
     dataset = SemanticDataset(eval_data, None, 1.0, 1.0, trans_flag=False)
-    net = UNet(1, Config.class_nums)
+    net = UNet(1, class_nums)
     net.to(device)
     net.load_state_dict(torch.load(model_path, map_location=device))
     print(device)
@@ -86,9 +86,9 @@ def pred_for_Seg(eval_data, eval_heatmap_dir, model_path, model_str):
     print(model_str, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 
 
-def eval_for_Seg(eval_data, eval_heatmap_dir, model_path, saved_dir, model_str, saved_flag=True):
+def eval_for_Seg(eval_data, eval_heatmap_dir, model_path, saved_dir, model_str, class_nums, saved_flag=True):
     dataset =SemanticDataset(eval_data, eval_heatmap_dir, 1.0, 1.0, trans_flag=False)
-    net = UNet(1, Config.class_nums)
+    net = UNet(1, class_nums)
     net.to(device)
     net.load_state_dict(torch.load(model_path, map_location=device))
     print(device)
@@ -126,6 +126,22 @@ def eval_all_models_for_seg(eval_data, eval_heatmap_dir, model_str, model_path_l
     run_best_save_result()
 
 
+def get_args():
+    parser = argparse.ArgumentParser(description='Train the Segmentation')
+    parser.add_argument('--num_class', '-c', metavar='C', type=int, default=1, help='Number of class')
+    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=200, help='Number of epochs')
+    parser.add_argument('--batch_size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='Batch size')
+    parser.add_argument('--learning_rate', '-l', metavar='LR', type=float, default=1e-4,
+                        help='Learning rate', dest='lr')
+    parser.add_argument('--load', '-f', type=str, default="./checkpoints/checkpoint_epoch54.pth",
+                        help='Load model from a .pth file')
+    parser.add_argument('--scale', '-s', type=float, default=1.0, help='Downscaling factor of the images')
+    parser.add_argument('--validation', '-v', dest='val', type=float, default=10.0,
+                        help='Percent of the data that is used as validation (0-100)')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    train_and_eval()
+    args = get_args()
+    train_and_eval(args)
 
