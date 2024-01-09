@@ -64,13 +64,12 @@ def KL_loss_for_each_heatmap(p, q):
     for bz in range(N):
         for ch in range(C):
             ph = p[bz, ch, :]
-            qh = p[bz, ch, :]
+            qh = q[bz, ch, :]
             loss += KL_Loss(ph.log(), qh)
     return loss
 
 
 def JS_loss(pred, gt):
-    KL_Loss = torch.nn.KLDivLoss()
     pred_norm = norm_for_each_heatmap(pred)
     gt_norm = norm_for_each_heatmap(gt)
     m = (pred_norm + gt_norm) * 0.5
@@ -80,7 +79,12 @@ def JS_loss(pred, gt):
     return loss
 
 
-def train(net, dataset, val_rate, epochs, batch_size, lr, saved_epoch_step, model_str=''):
+def train(net, dataset, train_parameters, model_str=''):
+    val_rate = train_parameters.val_rate
+    batch_size = train_parameters.batch_size
+    lr = train_parameters.lr
+    epochs = train_parameters.epochs
+    save_epoch_step = train_parameters.save_epoch_step
     num_val = int(len(dataset) * val_rate)
     num_train = len(dataset) - num_val
     train_set, val_set = random_split(dataset, [num_train, num_val])
@@ -127,7 +131,7 @@ def train(net, dataset, val_rate, epochs, batch_size, lr, saved_epoch_step, mode
                     pbar.update(img.shape[0])
                     writer.add_scalar('Loss/Val_MSE', loss_mse.item(), global_step)
 
-        if epoch % saved_epoch_step == 0:
+        if epoch % save_epoch_step == 0:
             if not os.path.exists(saved_model_dir):
                 os.makedirs(saved_model_dir)
             saved_model_name = model_str + '_' + t + f'LR_{lr}_BS_{batch_size}_{crit}_ep_{epoch}_{epochs}' + str(loss.item()) + '.pth'
@@ -146,11 +150,8 @@ def train_ep_200(des=''):
     dataset = SemanticDataset(train_data_dir, train_heatmap_dir, 1.0, 1.0)
     net = UNet(dataset.input_channels, dataset.output_channels)
     net.to(device)
-    val_rate = 0
-    lr = 0.0001
-    epoch = 200
-    bz = 1
-    train(net, dataset, val_rate, epoch, bz, lr, model_str='')
+    train_parameters = TrainParameters(val_rate=0, lr=0.0001, batch_size=1, epochs=200, save_epoch_step=1)
+    train(net, dataset, train_parameters, model_str='')
     end_time = time.strftime("%m%d%H%M%S", time.localtime())
     print(des, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 

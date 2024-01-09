@@ -9,13 +9,13 @@ import os
 import torch
 
 
-class Parameter:
-    def __init__(self, val_rate, lr, batch_size, epochs):
+class TrainParameters:
+    def __init__(self, val_rate, lr, batch_size, epochs, save_epoch_step):
         self.val_rate = val_rate
         self.lr = lr
         self.batch_size = batch_size
         self.epochs = epochs
-
+        self.save_epoch_step = save_epoch_step
 
 
 def resize_image(itkimage, factor, resamplemethod=sitk.sitkNearestNeighbor):
