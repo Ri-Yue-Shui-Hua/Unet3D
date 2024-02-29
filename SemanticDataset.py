@@ -66,8 +66,8 @@ class SemanticDataset(Dataset):
     def get_array_from_volume(self, itk_img_file, img_scale):
         itk_img = sitk.ReadImage(itk_img_file)
         itk_img = resize_image(itk_img, img_scale)
-        img_arr = sitk.GetArrayFromImage(itk_img).astype(np.float)
-        return itk_img, img_arr
+        img_arr = sitk.GetArrayFromImage(itk_img).astype(np.float32)
+        return itk_img,
 
     def __getitem__(self, idx):
         itk_img_file = self.all_fs[idx]
@@ -83,7 +83,7 @@ class SemanticDataset(Dataset):
                 print('\t' + label_path)
                 sitk_label, label_arr = self.get_array_from_volume(label_path, self.label_scale)
                 labels.append(label_arr)
-            labels = np.array(labels).astype(np.float)
+            labels = np.array(labels).astype(np.float32)
             if self.trans_flag:
                 img_arr, labels = transform(img_arr, labels)
             return itk_img_file, torch.from_numpy(img_arr).float(), torch.from_numpy(labels).float()

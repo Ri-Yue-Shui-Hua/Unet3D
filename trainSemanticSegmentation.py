@@ -20,11 +20,11 @@ def train_for_seg(data_dir, label_dir, model_str, args):
     net = UNet(1, args.num_class)
     net.to(device)
     print(device)
-    val_rate = 0
-    lr = args.learning_rate
-    epoch = args.epochs
+    lr = args.lr
+    epochs = args.epochs
     bz = args.batch_size
-    train(net, dataset, val_rate, epoch, bz, lr, model_str)
+    train_parameters = TrainParameters(val_rate=0, lr=lr, batch_size=bz, epochs=epochs, save_epoch_step=1)
+    train(net, dataset, train_parameters, model_str)
     end_time = time.strftime("%m%d%H%M%S", time.localtime())
     print(model_str, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 
@@ -105,8 +105,7 @@ def get_args():
     parser.add_argument('--num_class', '-c', metavar='C', type=int, default=1, help='Number of class')
     parser.add_argument('--epochs', '-e', metavar='E', type=int, default=200, help='Number of epochs')
     parser.add_argument('--batch_size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='Batch size')
-    parser.add_argument('--learning_rate', '-l', metavar='LR', type=float, default=1e-4,
-                        help='Learning rate', dest='lr')
+    parser.add_argument('--learning_rate', '-l', metavar='LR', type=float, default=1e-4, help='Learning rate', dest='lr')
     parser.add_argument('--load', '-f', type=str, default="./checkpoints/checkpoint_epoch54.pth",
                         help='Load model from a .pth file')
     parser.add_argument('--scale', '-s', type=float, default=1.0, help='Downscaling factor of the images')
@@ -120,12 +119,14 @@ if __name__ == "__main__":
     device = torch.device('cpu')
     model_str = 'Deconv_ReLu_MSE'
     args = get_args()
-    data_folder_name = "AnkleSegmentation"
-    folder_prev = '/Data/wmz/Dataset/'
-    train_data_dir = folder_prev + data_folder_name + "/train"
-    train_heatmap_dir = folder_prev + data_folder_name + "label"
+    data_folder_name = "HipSegmentation"
+    folder_prev = 'D:/Dataset/'
+    train_image_folder = "imagesTr"
+    train_label_folder = "labelsTr"
+    train_data_dir = os.path.join(folder_prev, data_folder_name, train_image_folder)
+    train_label_dir = os.path.join(folder_prev, data_folder_name, train_label_folder)
     # 训练
-    train_for_seg(train_data_dir, train_heatmap_dir, model_str, args)
+    train_for_seg(train_data_dir, train_label_dir, model_str, args)
     # 评估
     # eval_data = folder_prev + data_folder_name + '/test'
     # eval_heatmap_dir = folder_prev + data_folder_name + '/label'

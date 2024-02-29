@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from SemanticDataset import SemanticDataset
 from utils import *
 
-device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 def observe_for_training(net, epoch, epochs, critic, global_step, batch_size, lr, loss, sample_file_name, saved_dir):
@@ -108,7 +108,7 @@ def train(net, dataset, train_parameters, model_str=''):
     global_step = 0
     for epoch in range(epochs):
         net.train()
-        with tqdm(total=num_train, dec=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
+        with tqdm(total=num_train, desc=f'Epoch{epoch + 1}/{epochs}', unit='img') as pbar:
             for f, img, mark_gt in train_loader:
                 img, mark_gt = img.to(device), mark_gt.to(device)
                 mark_pred = net(img)
@@ -144,14 +144,15 @@ def train(net, dataset, train_parameters, model_str=''):
 def train_ep_200(des=''):
     # Train data: half size
     start_time = time.strftime("%m%d%H%M%S", time.localtime())
-    from nets.UNetModel import UNet
-    train_heatmap_dir = '/Data/wmz/Dataset/Train/'
-    train_data_dir = ''
-    dataset = SemanticDataset(train_data_dir, train_heatmap_dir, 1.0, 1.0)
+    # from nets.UNetModel import UNet
+    from nets.UNet_3Ddc2 import UNet_3D as UNet
+    train_data_dir = 'D:/Dataset/HipSegmentation/imagesTr'
+    train_heatmap_dir = 'D:/Dataset/HipSegmentation/labelsTr'
+    dataset = SemanticDataset(1, train_data_dir, train_heatmap_dir, 1.0, 1.0)
     net = UNet(dataset.input_channels, dataset.output_channels)
     net.to(device)
     train_parameters = TrainParameters(val_rate=0, lr=0.0001, batch_size=1, epochs=200, save_epoch_step=1)
-    train(net, dataset, train_parameters, model_str='')
+    train(net, dataset, train_parameters, model_str='Deconv_ReLu_MSE')
     end_time = time.strftime("%m%d%H%M%S", time.localtime())
     print(des, '\tStart Time', start_time, '\tEnd Time: ', end_time)
 
